@@ -1,0 +1,86 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EcoLoop – Eco Analyzer</title>
+<link rel="icon" type="image/png" href="ecoloop.png" />
+<link rel="stylesheet" href="styles.css" />
+</head><body>
+  <nav class="nav"><div class="container nav-inner">
+    <a class="brand" href="./"><img src="ecoloop.png" alt="EcoLoop"><span>EcoLoop</span></a>
+    <div class="links">
+      <a href="classifier.html">Trash Classifier</a>
+      <a href="analyzer.html">Eco Analyzer</a>
+      <a href="marketplace.html">Marketplace</a>
+      <a class="cta" href="https://aquaspot.lovable.app" target="_blank" rel="noopener">AquaSpot</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Open menu"><div></div></button>
+  </div><div class="mobile" id="mobile">
+    <a href="classifier.html">Trash Classifier</a>
+    <a href="analyzer.html">Eco Analyzer</a>
+    <a href="marketplace.html">Marketplace</a>
+    <a href="https://aquaspot.lovable.app" target="_blank" rel="noopener">AquaSpot</a>
+  </div></nav>
+
+  <header class="hero"><img src="ecoloop.png" alt="EcoLoop" style="height:72px"/>
+    <h1>Eco Analyzer</h1>
+    <p>Simple inputs → instant eco score (percentage) and letter grade A–G</p>
+  </header>
+
+  <section><div class="container">
+    <div class="card">
+      <h3>Enter details</h3>
+      <div class="row">
+        <div>
+          <label>Material (1 best, 5 worst)</label>
+          <input id="material" class="input" type="number" min="1" max="5" value="3" />
+        </div>
+        <div>
+          <label>Weight (kg)</label>
+          <input id="weight" class="input" type="number" step="0.01" value="0.5" />
+        </div>
+        <div>
+          <label>Energy used (kWh)</label>
+          <input id="energy" class="input" type="number" step="0.01" value="1" />
+        </div>
+        <div>
+          <label>Transport distance (km)</label>
+          <input id="distance" class="input" type="number" step="1" value="10" />
+        </div>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button id="calc" class="btn">Calculate</button>
+        <button id="server" class="btn secondary">Calculate (Serverless)</button>
+      </div>
+      <div id="out" style="margin-top:14px"></div>
+    </div>
+  </div></section>
+
+  <footer>© 2025 EcoLoop Hub</footer>
+
+<script>
+const btn=document.getElementById('hamburger');const panel=document.getElementById('mobile');
+btn&&btn.addEventListener('click',()=>panel.classList.toggle('open'));
+
+function localScore(){
+  const m=+material.value, w=+weight.value, e=+energy.value, d=+distance.value;
+  // Simple, explainable equation (lower is greener):
+  // impact = 0.4*m + 0.3*w + 0.2*e + 0.1*(d/50)
+  const impact = 0.4*m + 0.3*w + 0.2*e + 0.1*(d/50);
+  // Convert to 0–100% where 100 = greenest
+  const pct = Math.max(0, Math.min(100, 100 - impact*10));
+  const grade = pct>=90?'A':pct>=80?'B':pct>=70?'C':pct>=60?'D':pct>=50?'E':pct>=35?'F':'G';
+  return {pct: pct.toFixed(1), grade, impact: impact.toFixed(2)};
+}
+
+calc.onclick=()=>{
+  const r=localScore(); out.innerHTML=`<p><strong>Local score:</strong> ${r.pct}% (Grade ${r.grade}) — impact ${r.impact}</p>`;
+}
+
+server.onclick=async()=>{
+  const payload={material:+material.value,weight:+weight.value,energy:+energy.value,distance:+distance.value};
+  out.textContent='Calculating on server…';
+  const res=await fetch('/.netlify/functions/ecoScore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const data=await res.json();
+  out.innerHTML=`<p><strong>Serverless score:</strong> ${data.percent}% (Grade ${data.grade}) — impact ${data.impact}</p>`;
+}
+</script>
+</body></html>
