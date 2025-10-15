@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EcoLoop – Trash Classifier</title>
+<link rel="icon" type="image/png" href="ecoloop.png" />
+<link rel="stylesheet" href="styles.css" />
+<!-- TensorFlow.js + MobileNet -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.21.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
+</head><body>
+  <nav class="nav"><div class="container nav-inner">
+    <a class="brand" href="./"><img src="ecoloop.png" alt="EcoLoop"><span>EcoLoop</span></a>
+    <div class="links">
+      <a href="classifier.html">Trash Classifier</a>
+      <a href="analyzer.html">Eco Analyzer</a>
+      <a href="marketplace.html">Marketplace</a>
+      <a class="cta" href="https://aquaspot.lovable.app" target="_blank" rel="noopener">AquaSpot</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Open menu"><div></div></button>
+  </div><div class="mobile" id="mobile">
+    <a href="classifier.html">Trash Classifier</a>
+    <a href="analyzer.html">Eco Analyzer</a>
+    <a href="marketplace.html">Marketplace</a>
+    <a href="https://aquaspot.lovable.app" target="_blank" rel="noopener">AquaSpot</a>
+  </div></nav>
+
+  <header class="hero"><img src="ecoloop.png" alt="EcoLoop" style="height:72px"/>
+    <h1>Trash Classifier</h1>
+    <p>Local image recognition with TensorFlow.js + recycling guidance via Gemini</p>
+    <div class="btns"><a class="btn" href="#tool">Try it</a></div>
+  </header>
+
+  <section id="tool"><div class="container">
+    <div class="grid">
+      <div class="card">
+        <h3>Upload an item</h3>
+        <input id="file" type="file" accept="image/*" class="input" />
+        <div style="margin-top:12px"><img id="preview" style="max-width:100%;border-radius:12px;display:none" alt="preview"></div>
+      </div>
+      <div class="card">
+        <h3>Results</h3>
+        <div id="local" class="stack"></div>
+        <div class="actions"><button id="askGemini" class="btn" disabled>Ask Gemini for Recycling Guide</button></div>
+        <div id="gemini" class="stack"></div>
+      </div>
+    </div>
+  </div></section>
+
+  <footer>Need help? View <a href="https://aquaspot.lovable.app" target="_blank" rel="noopener">AquaSpot</a></footer>
+
+<script>
+const btn=document.getElementById('hamburger');const panel=document.getElementById('mobile');
+btn&&btn.addEventListener('click',()=>panel.classList.toggle('open'));
+
+let model; (async()=>{model=await mobilenet.load();})();
+const fileEl=document.getElementById('file'); const preview=document.getElementById('preview');
+const local=document.getElementById('local'); const askGem=document.getElementById('askGemini');
+fileEl.addEventListener('change',async(e)=>{
+  const f=e.target.files[0]; if(!f) return; const url=URL.createObjectURL(f); preview.src=url; preview.style.display='block';
+  await new Promise(r=>setTimeout(r,50)); const preds=await model.classify(preview); local.innerHTML='<p><strong>TensorFlow.js guesses:</strong></p>'+
+    preds.map(p=>`<div>- ${p.className} (${(p.probability*100).toFixed(1)}%)</div>`).join('');
+  askGem.disabled=false; askGem.onclick=()=>askGemini(f,preds[0]?.className||'item');
+});
+
+async function askGemini(file, label){
+  const gemDiv=document.getElementById('gemini'); gemDiv.textContent='Contacting serverless…';
+  const form=new FormData(); form.append('image',file); form.append('label',label);
+  const res=await fetch('/.netlify/functions/classifyTrash',{method:'POST',body:form});
+  const data=await res.json();
+  gemDiv.innerHTML = `<p><strong>Gemini Recycling Guide:</strong></p><pre style="white-space:pre-wrap">${data.guide||data.error}</pre>`;
+}
+</script>
+</body></html>
