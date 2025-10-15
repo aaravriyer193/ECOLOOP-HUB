@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EcoLoop – Marketplace</title>
+<link rel="icon" type="image/png" href="ecoloop.png" />
+<link rel="stylesheet" href="styles.css" />
+</head><body>
+  <nav class="nav"><div class="container nav-inner">
+    <a class="brand" href="./"><img src="ecoloop.png" alt="EcoLoop"><span>EcoLoop</span></a>
+    <div class="links">
+      <a href="classifier.html">Trash Classifier</a>
+      <a href="analyzer.html">Eco Analyzer</a>
+      <a href="marketplace.html">Marketplace</a>
+      <a class="cta" href="https://aquaspot.lovable.app" target="_blank" rel="noopener">AquaSpot</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Open menu"><div></div></button>
+  </div><div class="mobile" id="mobile">
+    <a href="classifier.html">Trash Classifier</a>
+    <a href="analyzer.html">Eco Analyzer</a>
+    <a href="marketplace.html">Marketplace</a>
+    <a href="https://aquaspot.lovable.app" target="_blank" rel="noopener">AquaSpot</a>
+  </div></nav>
+
+  <header class="hero"><img src="ecoloop.png" alt="EcoLoop" style="height:72px"/>
+    <h1>Sustainable Marketplace</h1>
+    <p>Swap, donate, or trade — card grid powered by serverless</p>
+  </header>
+
+  <section><div class="container">
+    <div class="actions" style="margin-bottom:12px">
+      <button id="load" class="btn">Load Products</button>
+    </div>
+    <div id="grid" class="grid"></div>
+  </div></section>
+
+  <footer>© 2025 EcoLoop Hub</footer>
+
+<script>
+const btn=document.getElementById('hamburger');const panel=document.getElementById('mobile');
+btn&&btn.addEventListener('click',()=>panel.classList.toggle('open'));
+
+function card(p){
+  return `<div class="card"><div class="icon"><svg viewBox='0 0 24 24'><path d='M6 9h12l1.4 10a2 2 0 0 1-2 2H6.6a2 2 0 0 1-2-2L6 9z'/><path d='M8 9V7a4 4 0 0 1 8 0v2'/></svg></div>
+  <h3>${p.title}</h3><p>${p.desc}</p><p><strong>Condition:</strong> ${p.condition}</p><a href='${p.link}' target='_blank' rel='noopener'>Details →</a></div>`;
+}
+
+load.onclick=async()=>{
+  grid.innerHTML='Loading…';
+  const res=await fetch('/.netlify/functions/marketplace');
+  const items=await res.json();
+  grid.innerHTML=items.map(card).join('');
+}
+
+// Auto-load on first paint
+load.click();
+</script>
+</body></html>
